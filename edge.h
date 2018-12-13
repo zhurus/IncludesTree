@@ -8,7 +8,6 @@ class Edge: public QObject, public QGraphicsLineItem
     Q_OBJECT
 public:
     Edge(Node* node1, Node* node2);
-    ~Edge();
 
     void setNode1(Node*);
     void setNode2(Node*);

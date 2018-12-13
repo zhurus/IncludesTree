@@ -2,12 +2,14 @@
 
 Graph::Graph()
 {
-
+    m_containsEdges = false;
+    m_containsNodes = false;
 }
 
 void Graph::addNode(QString nodeName,Node* node)
 {
     m_nodes[nodeName] = node;
+    m_containsNodes = true;
 }
 
 Node* Graph::node(QString node)
@@ -18,6 +20,7 @@ Node* Graph::node(QString node)
 void Graph::addEdge(Edge* edge)
 {
     m_edges.append(edge);
+    m_containsEdges = true;
 }
 
 void Graph::setWidth(double width)

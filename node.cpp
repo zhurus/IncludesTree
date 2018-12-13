@@ -11,7 +11,7 @@ Node::Node()
 Node::Node(QString& nodeName, QPointF position)
 {
     m_nodeName = nodeName;
-    m_position = position;
+    m_initialPosition = position;
     setPos(position.rx(),position.ry());
     setFlag(QGraphicsItem::ItemIsMovable);
 }
@@ -29,15 +29,17 @@ void Node::paint(QPainter* painter,
 
     painter->setPen(QPen(Qt::black,1));
     painter->setBrush(Qt::green);
-    painter->drawRect(-m_width/2,-m_height/2+2,m_width,m_height);
+    painter->drawRect(-m_width/2,-m_height/2,m_width,m_height);
 
     QFontMetrics fm(painter->font());
-    painter->setFont(QFont("Times New Roman",10));
+    painter->setFont(QFont("Times New Roman",12));
     int textWidth = fm.width(m_nodeName);
     int textHeight = painter->font().pixelSize();
     painter->scale(1,-1);
-
-    painter->drawText(QPointF(-textWidth/2,-textHeight),m_nodeName);
+    if(textHeight+4<m_height || textWidth<m_width)
+    {
+        painter->drawText(QPointF(-textWidth/2,-textHeight+2),m_nodeName);
+    }
     setToolTip(m_nodeName);
 
     Q_UNUSED(options);
@@ -64,7 +66,7 @@ double Node::height()const
     return m_height;
 }
 
-QPointF Node::position()const
+QPointF Node::initialPosition()const
 {
-    return m_position;
+    return m_initialPosition;
 }

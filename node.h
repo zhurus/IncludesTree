@@ -16,13 +16,13 @@ public:
     void setHeight(double height);
     double width()const;
     double height()const;
-    QPointF position()const;
+    QPointF initialPosition()const;
 
 private:
     QRectF boundingRect()const;
     void paint(QPainter* painter,
                const QStyleOptionGraphicsItem* options,QWidget* widget);
-    QPointF m_position;
+    QPointF m_initialPosition;
     QString m_nodeName;
     double m_width;
     double m_height;

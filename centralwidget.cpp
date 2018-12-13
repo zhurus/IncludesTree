@@ -14,39 +14,33 @@ CentralWidget::CentralWidget(QWidget *parent) : QWidget(parent)
 {
 
     m_view = new QGraphicsView(this);
-    m_scene = new QGraphicsScene(0,0,1023,574);
-    m_view->scale(1,-1);
-    m_view->setScene(m_scene);
-}
+    m_scene = new QGraphicsScene(0,0,700,550, this);
 
-CentralWidget::~CentralWidget()
-{
-    delete m_view;
-    delete m_scene;
+    m_view->setScene(m_scene);
+    m_view->scale(1,-1);
+    m_graph = Graph();
+
+    connect(this,SIGNAL(sendStatusMessage(QString)),
+        this->parent(),
+        SLOT(changeStatusBarMessage(QString)));
 }
 
 void CentralWidget::deleteGraphs()
 {
-    for(auto g:m_graphs)
-    {
-        for(auto e:g->edgesVector())
-        {
-            m_scene->removeItem(e);
-        }
-        for(auto n:g->nodesVector())
-        {
-            m_scene->removeItem(n);
-        }
-    }
-    m_graphs.remove(0,m_graphs.length());
+    emit sendStatusMessage("Delete graphs...");
+
+    m_graph = Graph();
+    m_scene->clear();
+
+    emit sendStatusMessage("Output area clearence completed");
 }
 
-void CentralWidget::setFileName(QString fileName)
+void CentralWidget::setFile(QFileInfo file)
 {
-    m_fileName = fileName;
+    m_file = file;
 }
 
-void CentralWidget::readGraph(QString includes)
+void CentralWidget::formGraph(QString includes)
 {
     QString str(includes);
 
@@ -75,7 +69,9 @@ void CentralWidget::readGraph(QString includes)
 
 // получение файла из graphViz
     QProcess p;
-    p.start("dot -Tplain -Gratio=1 ");
+//    p.start("dot -Tplain -Gratio=1 ");
+    p.start("dot -Tplain -Gfontsize=12 -Gratio=" +
+        QString().number(m_scene->height()/m_scene->width())+" ");
     p.write(ba1);
     p.waitForBytesWritten();
     p.closeWriteChannel();
@@ -93,6 +89,7 @@ void CentralWidget::readGraph(QString includes)
         out = out.replace("uni"+ QString::number(unicodeKey),ch);
     }
 
+    m_fromGraphViz = out;
 // запись в файл для промежуточного контроля при отладке
     QFile f2("C:\\Users\\USER\\Desktop\\test\\afterGraphViz.txt");
     QByteArray ba2;
@@ -114,47 +111,56 @@ void CentralWidget::readGraph(QString includes)
 
         if(buff[0]=="graph")
         {
-            m_graphs.append(new Graph());
-            double scale = buff[1].toDouble()*500/buff[2].toDouble();
-            m_graphs.last()->setScale(scale);
-            m_graphs.last()->setWidth(buff[2].toDouble()*scale);
-            m_graphs.last()->setHeight(buff[3].toDouble()*scale);
+            double scale = buff[1].toDouble()*m_scene->width()/buff[2].toDouble();
+            m_graph.setScale(scale);
+            m_graph.setWidth(buff[2].toDouble()*scale);
+            m_graph.setHeight(buff[3].toDouble()*scale);
         }
         if(buff[0]=="node")
         {
-            Graph* g = m_graphs.last();
-            double scale = g->scale();
-            g->addNode(buff[1],new Node(buff[6],
+            double scale = m_graph.scale();
+            m_graph.addNode(buff[1],new Node(buff[6],
                 QPointF(buff[2].toDouble()*scale,buff[3].toDouble()*scale)));
-            g->node(buff[1])->setWidth(buff[4].toDouble()*scale);
-            g->node(buff[1])->setHeight(buff[5].toDouble()*scale);
+            m_graph.node(buff[1])->setWidth(buff[4].toDouble()*scale);
+            m_graph.node(buff[1])->setHeight(buff[5].toDouble()*scale);
         }
         if(buff[0]=="edge")
         {
-            Graph* g = m_graphs.last();
-            g->addEdge(new Edge(g->node(buff[1]),g->node(buff[2])));
+            m_graph.addEdge(new Edge(m_graph.node(buff[1]),
+                m_graph.node(buff[2])));
         }
     }
 }
 
 void CentralWidget::plotGraphs()
 {
-    for(auto g:m_graphs)
-    {
-        for(auto e:g->edgesVector())
-        {
-            m_scene->addItem(e);
-        }
-        for(auto n:g->nodesVector())
-        {
-            m_scene->addItem(n);
-        }
 
+    for(auto e:m_graph.edgesVector())
+    {
+        m_scene->addItem(e);
+    }
+    for(auto n:m_graph.nodesVector())
+    {
+        m_scene->addItem(n);
     }
 
+    emit sendStatusMessage("Graph has been plotted");
 }
 
-QString CentralWidget::fileName()const
+QFileInfo CentralWidget::file()const
 {
-    return m_fileName;
+    return m_file;
+}
+
+QString CentralWidget::fromGraphviz()const
+{
+    return m_fromGraphViz;
+}
+
+void CentralWidget::onInitialState()
+{
+    for(auto n:m_graph.nodesVector())
+    {
+        n->setPos(n->initialPosition());
+    }
 }

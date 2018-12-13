@@ -1,13 +1,15 @@
 #include "filehandler.h"
 #include <QString>
+#include "mainwindow.h"
 
-FileHandler::FileHandler(QString absolutePath)
+FileHandler::FileHandler(QFileInfo file)
 {
-    m_absolutePath = absolutePath;
+    m_file = file;
 
     //retrieving the user includes and includes tree
     QProcess process;
-    QString command("gcc -H -MM " + m_absolutePath);
+    process.setWorkingDirectory(m_file.absolutePath());
+    QString command("gcc -H -MM " + m_file.fileName());
     process.start(command);
     process.waitForFinished();
 
@@ -15,11 +17,19 @@ FileHandler::FileHandler(QString absolutePath)
     QString out(process.readAllStandardOutput());
     process.close();
 
+    if(err.length() ==0 || err.at(0)!='.')
+    {
+        throw MainWindow::wrongFile();
+    }
     // preparing for parsing
-    m_allIncludes = err.split("\r\n");
-    m_tree = new IncludesTree(m_absolutePath.
-        split("\\").last());
-    m_userIncludes = out.remove("main.o: ").
+    m_allIncludes = err.remove(" ").split("\r\n");
+    if(m_allIncludes.last().isEmpty())
+    {
+        m_allIncludes.removeLast();
+    }
+
+    m_tree = new IncludesTree(m_file.fileName());
+    m_userIncludes = out.remove(m_file.baseName()+".o: ").
         replace(" \\\r\n ","\r\n").
         replace(QRegExp(" (?=[a-zA-Z\\/])"),"\r\n").
         split(QRegExp("\r\n(?=.)"));
@@ -27,71 +37,81 @@ FileHandler::FileHandler(QString absolutePath)
 
     // parsing with recursive functions
     getIncludesTree();
+
+}
+
+FileHandler::~FileHandler()
+{
+    delete m_tree;
 }
 
 void FileHandler::getIncludesTree()
 {
-    m_tree->addChild(new IncludesTree(
-        m_allIncludes[0].split("/").last()));
-    int i = 1;  //m_allIncludes iterator
-    int j = 1;  //m_userIncludes iterator
+    int i = 0;
+    int j = 1;
     int level;
-    while((level=levelOfItemInTree(m_allIncludes[i]))>0)
+
+    while(i!=m_allIncludes.length() &&
+          m_allIncludes[i].at(0)=='.')
     {
-        if(level>=2)
+        QString a  = QFileInfo(QString(m_allIncludes[i])
+            .remove(QRegExp("^\\.+")))
+            .fileName();
+
+        QString b = QFileInfo(m_userIncludes[j]).fileName();
+
+        if(a==b)
         {
-            QString a = m_allIncludes[i].
-                replace("/","\\").split("\\").last();
-            QString b = m_userIncludes[j].
-                split("\\").last();
-            if(a==b)
-            {
-                m_tree->children().last()->
-                    addChild(getIncludesTree(i,j,2));
-            }
-            ++i;
+            j++;
+            i++;
         }
-        // if level equals 1
-        else{
-            QString a = m_allIncludes[i].replace("/","\\").
-                split("\\").last();
-            QString b = m_userIncludes[j].split("\\").last();
-            m_tree->addChild(new IncludesTree(a));
-            if(a==b)
-            {
-                ++j;
-            }
-            ++i;
+        else
+        {
+            m_allIncludes.removeAt(i);
         }
+    }
+
+    while(i!=m_allIncludes.length())
+    {
+        m_allIncludes.removeAt(i);
+    }
+
+    i = 0;
+    while(i<m_allIncludes.length())
+    {
+        level = levelOfItemInTree(m_allIncludes[i]);
+        m_tree->addChild(getIncludesTree(i,level));
     }
 }
 
-IncludesTree* FileHandler::getIncludesTree(int& i,int& j,int level1)
+IncludesTree* FileHandler::getIncludesTree(int& i,int level1)
 {
-    int level2;
-    QString a = m_allIncludes[i].replace("/","\\").
-        split("\\").last();
+    QString a  = QFileInfo(QString(m_allIncludes[i])
+        .remove(QRegExp("^\\.+")))
+        .fileName();
+
     IncludesTree* res = new IncludesTree(a);
     ++i;
-    ++j;
-    a = m_allIncludes[i].replace("/","\\").
-        split("\\").last();
-    if(j<m_userIncludes.length())
+    int level2;
+    if(i<m_allIncludes.length())
     {
-        QString b = m_userIncludes[j].split("\\").last();
-        while( (level2 = levelOfItemInTree(m_allIncludes[i]))>level1
-               && a==b)
+        a  = QFileInfo(QString(m_allIncludes[i])
+                .remove(QRegExp("^\\.+")))
+                .fileName();
+        while(i<m_allIncludes.length()&&
+              (level2 = levelOfItemInTree(m_allIncludes[i]))>level1)
         {
-            res->addChild(getIncludesTree(i,j,level2));
+            res->addChild(getIncludesTree(i,level2));
         }
     }
+
     return res;
 }
 
 int FileHandler::levelOfItemInTree(QString& item)const
 {
     int i = 0;
-    while(item[i]==".")
+    while(item[i]=='.')
     {
         i++;
     }

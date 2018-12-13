@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/topToolbar">
         <file>open.png</file>
+        <file>home.png</file>
     </qresource>
 </RCC>

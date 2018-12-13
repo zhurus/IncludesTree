@@ -4,25 +4,28 @@
 #include <QStringList>
 #include <QProcess>
 #include <fstream>
-#include "IncludesTree.h"
+#include "includestree.h"
+#include <QFileInfo>
 
 class FileHandler
 {
 public:
-    FileHandler(QString absolutePath);
+    FileHandler(QFileInfo fi);
+    ~FileHandler();
 
-    void getIncludesTree();
     QString toGraphviz()const;
 
 private:
+    void getIncludesTree();
     QString recursiveToGraphviz(IncludesTree*)const;
     int levelOfItemInTree(QString& item)const;
-    IncludesTree* getIncludesTree(int& i,int& j,int level1);
+    IncludesTree* getIncludesTree(int& i,int level1);
 
     IncludesTree* m_tree;
     QStringList m_allIncludes;
-    QString m_absolutePath;
+    QFileInfo m_file;
     QStringList m_userIncludes;
+    QStringList m_userIncludesTree;
 };
 
 

@@ -24,12 +24,6 @@ Edge::Edge(Node* node1,Node* node2)
             this,SLOT(anyNodeIsMoved()));
 }
 
-Edge::~Edge()
-{
-//    delete m_node1;
-//    delete m_node2;
-}
-
 void Edge::anyNodeIsMoved()
 {
     qreal x1 = m_node1->pos().rx();

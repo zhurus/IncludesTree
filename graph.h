@@ -27,6 +27,8 @@ private:
     double m_width;
     double m_height;
     double m_scale;
+    bool m_containsEdges;
+    bool m_containsNodes;
 };
 
 #endif // GRAPH_H
