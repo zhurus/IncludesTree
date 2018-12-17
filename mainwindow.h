@@ -13,15 +13,17 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = 0);
+    MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 
     class wrongFile{};
+    class noFileChosen{};
 private slots:
     void open();
     void home();
     void changeStatusBarMessage(QString message);
+    void showErrorMessage(QString err);
 private:
     CentralWidget* m_centralWidget;
     QToolBar* m_toolbar;

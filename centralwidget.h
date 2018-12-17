@@ -22,6 +22,7 @@ public:
 
 signals:
     void sendStatusMessage(QString message);
+    void showErrorMessage(QString error);
 private:
     QGraphicsView* m_view;
     QGraphicsScene* m_scene;

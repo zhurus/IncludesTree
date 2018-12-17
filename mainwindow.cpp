@@ -2,7 +2,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 
-
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -39,15 +39,18 @@ MainWindow::~MainWindow()
 
 void MainWindow::open()
 {
-//    QString fileToParse = "C:\\Users\\USER\\Desktop\\test\\main.cpp";
     QString fileToParse = QFileDialog::getOpenFileName(
         this,QString("Choose file of graph"));
     QFileInfo fi(fileToParse);
     try
     {
-        if(!fi.exists())
+        if(!fi.exists()&&fi.fileName()!="")
         {
             throw wrongFile();
+        }
+        if(fi.fileName()=="")
+        {
+            throw noFileChosen();
         }
         m_centralWidget->deleteGraphs();
 
@@ -60,16 +63,22 @@ void MainWindow::open()
         m_centralWidget->plotGraphs();
 
     }
-    catch(MainWindow::wrongFile)
+    catch(wrongFile)
     {
-        QString errMsg("Error: file doesn't match the reqiurements");
-        emit changeStatusBarMessage(errMsg);
+       QString errMsg("Error: file doesn't match the reqiurements");
+       showErrorMessage(errMsg);
+       changeStatusBarMessage(errMsg);
+    }
+    catch(noFileChosen)
+    {
+        changeStatusBarMessage("File is not chosen. Please choose the file.");
     }
 
 }
 
 void MainWindow::home()
 {
+
     m_centralWidget->onInitialState();
 }
 
@@ -77,3 +86,11 @@ void MainWindow::changeStatusBarMessage(QString message)
 {
     m_statusmessage->setText(message);
 }
+
+void MainWindow::showErrorMessage(QString error)
+{
+    QMessageBox mb;
+    mb.critical(nullptr,"Error",error);
+    mb.setFixedSize(500,200);
+}
+

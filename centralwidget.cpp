@@ -23,6 +23,9 @@ CentralWidget::CentralWidget(QWidget *parent) : QWidget(parent)
     connect(this,SIGNAL(sendStatusMessage(QString)),
         this->parent(),
         SLOT(changeStatusBarMessage(QString)));
+    connect(this,SIGNAL(showErrorMessage(QString)),
+        this->parent(),
+        SLOT(showErrorMessage(QString)));
 }
 
 void CentralWidget::deleteGraphs()
