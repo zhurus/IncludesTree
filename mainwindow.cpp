@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include <QFileDialog>
 #include <QFileInfo>
-
+#include <QAction>
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)

@@ -9,12 +9,16 @@
 #include <QVector>
 #include <QTextStream>
 #include <QFile>
+#include <QVBoxLayout>
 
 CentralWidget::CentralWidget(QWidget *parent) : QWidget(parent)
 {
+    auto layout = new QVBoxLayout(this);
 
-    m_view = new QGraphicsView(this);
-    m_scene = new QGraphicsScene(0,0,700,550, this);
+    layout->addWidget(
+        m_view = new QGraphicsView(this));
+
+    m_scene = new QGraphicsScene(0,0,1500,550);
 
     m_view->setScene(m_scene);
     m_view->scale(1,-1);
